@@ -4,5 +4,5 @@ import router from './router'
 import "bootstrap/dist/css/bootstrap.min.css"
 import "bootstrap"
 
-
+//this.$router=router;
 createApp(App).use(router).mount('#app')

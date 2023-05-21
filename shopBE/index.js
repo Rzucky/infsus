@@ -1,17 +1,25 @@
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
+const { randomUUID } = require('crypto');
+// process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = 0;
 
 const app = express();
 app.use(express.json());
 app.use(cors())
 
+const dotenv = require("dotenv")
+
+dotenv.config()
+
+
 const pool = new Pool({
-  user: process.env.USER,
-  host: process.env.HOST,
-  database: process.env.DATABASE,
-  password: process.env.PASSWORD,
-  port: 5432
+  user: process.env.PGUSER,
+  host: process.env.PGHOST,
+  database: process.env.PGDATABASE,
+  password: process.env.PGPASSWORD,
+  port: 5432,
+  ssl:true
 });
 
 app.post('/createShop', async (req, res) => {
@@ -21,14 +29,14 @@ app.post('/createShop', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    const shopQuery = 'INSERT INTO shops(name) VALUES($1) RETURNING id';
-    const shopResult = await client.query(shopQuery, [name]);
+    const shopQuery = 'INSERT INTO shops(id, name) VALUES($1, $2) RETURNING id';
+    const shopResult = await client.query(shopQuery, [randomUUID(), name]);
 
     const shopId = shopResult.rows[0].id;
-
-    const employeeQuery = 'INSERT INTO employees(name, role, start_date, shop_id) VALUES($1, $2, $3, $4)';
+    const employeeQuery = 'INSERT INTO employees(name, role, startdate, shop_id) VALUES($1, $2, $3, $4)';
     for(let employee of employees) {
-      await client.query(employeeQuery, [employee.name, employee.role, employee.startDate, shopId]);
+      const date = new Date(employee.startDate)
+      await client.query(employeeQuery, [employee.name, employee.role, date, shopId]);
     }
 
     await client.query('COMMIT');
@@ -75,26 +83,29 @@ app.post('/editShop', async (req, res) => {
 
 app.get('/employees', async (req, res) => {
   const result = await pool.query(
-    `SELECT s.name AS shop_name, e.name AS employee_name, e.role, e.start_date 
+    `SELECT s.name AS name, e.name AS employee_name, e.role, e.startdate 
     FROM shops s 
     JOIN employees e 
     ON s.id = e.shop_id`
   );
 
+
+
   const data = result.rows.reduce((acc, row) => {
-    if (!acc[row.shop_name]) {
-      acc[row.shop_name] = [];
+    if (!acc[row.name]) {
+      acc[row.name] = [];
     }
 
-    acc[row.shop_name].push({
+    acc[row.name].push({
       name: row.employee_name,
       role: row.role,
-      startDate: row.start_date,
+      startDate: row.startdate,
     });
 
     return acc;
-  }, {});
 
+  }, {});
+  console.log(data)
   res.json(data);
 });
 

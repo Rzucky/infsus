@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import ShopForm from '../components/ShopForm.vue'
+import EditShop from '../components/EditShop.vue'
 
 const routes = [
   {
@@ -12,7 +13,12 @@ const routes = [
     path: '/createShop',
     name: 'create',
     component: ShopForm
-  }
+  },
+  {
+    path: '/edit-shop/',
+    name: 'EditShop',
+    component: EditShop
+  },
 ]
 
 const router = createRouter({

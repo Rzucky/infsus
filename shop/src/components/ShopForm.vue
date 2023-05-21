@@ -36,6 +36,7 @@
   
   <script>
   import { reactive } from "vue";
+  import axios from 'axios';
   
   export default {
     setup() {
@@ -58,15 +59,36 @@
         });
       };
   
-      const submitForm = () => {
-        for (const emp in shop.employees)
+      const submitForm = async () => {
+        let hasManager = false
+        for (const emp of shop.employees)
         {
+          console.log(emp)
             if (emp.role === '')
             {
                 emp.role == 'employee'
             }
+            if (emp.role === 'manager')
+            {
+              hasManager = true;
+            }
         }
-        console.log(shop);
+        
+
+        if (hasManager === false)
+        {
+            alert('Shop needs to have at least 1 manager')
+            return
+        }  
+        
+        const resp = await axios.post(`http://localhost:3000/createShop`, shop)
+        if (resp.error)
+        {
+          console.log(shop, resp);
+        }
+        // else{
+        //   this.$router.push('/')
+        // }
       };
   
       return { shop, addEmployee, submitForm };
